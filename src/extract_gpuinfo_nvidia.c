@@ -245,6 +245,23 @@ static nvmlReturn_t (*nvmlDeviceGetJpgUtilization)(nvmlDevice_t device, unsigned
 static nvmlReturn_t (*nvmlDeviceGetOfaUtilization)(nvmlDevice_t device, unsigned int *utilization,
                                                    unsigned int *samplingPeriodUs);
 
+// nvmlGpuDynamicPstatesInfo_t, covers the video engine and PCIe bus utilization (from nvml.h)
+#define NVML_MAX_GPU_UTILIZATIONS 8
+#define NVML_GPU_UTILIZATION_DOMAIN_VID 2
+#define NVML_GPU_UTILIZATION_DOMAIN_BUS 3
+
+typedef struct {
+  unsigned int flags;
+  struct {
+    unsigned int bIsPresent;
+    unsigned int percentage;
+    unsigned int incThreshold;
+    unsigned int decThreshold;
+  } utilization[NVML_MAX_GPU_UTILIZATIONS];
+} nvmlGpuDynamicPstatesInfo_t;
+
+static nvmlReturn_t (*nvmlDeviceGetDynamicPstatesInfo)(nvmlDevice_t device, nvmlGpuDynamicPstatesInfo_t *info);
+
 // Processes running on GPU
 
 typedef struct {
@@ -531,6 +548,25 @@ static void gpuinfo_nvidia_refresh_extra_clocks(NvPhysicalGpuHandle handle, stru
     if (gpuinfo_nvidia_extra_clocks_valid(frequency, present, graphics_mhz, memory_mhz))
       gpuinfo_nvidia_add_extra_clocks(dynamic_info, frequency, present);
   }
+}
+
+// The GPU and memory controller domains are left to nvmlDeviceGetUtilizationRates,
+// which withholds them where they are not meaningful (MIG).
+static void gpuinfo_nvidia_refresh_utilization_domains(nvmlDevice_t device, struct gpuinfo_dynamic_info *dynamic_info) {
+  if (!nvmlDeviceGetDynamicPstatesInfo)
+    return;
+
+  nvmlGpuDynamicPstatesInfo_t info;
+  memset(&info, 0, sizeof(info));
+  if (nvmlDeviceGetDynamicPstatesInfo(device, &info) != NVML_SUCCESS)
+    return;
+
+  if (info.utilization[NVML_GPU_UTILIZATION_DOMAIN_VID].bIsPresent &&
+      info.utilization[NVML_GPU_UTILIZATION_DOMAIN_VID].percentage <= 100)
+    SET_GPUINFO_DYNAMIC(dynamic_info, video_engine_rate, info.utilization[NVML_GPU_UTILIZATION_DOMAIN_VID].percentage);
+  if (info.utilization[NVML_GPU_UTILIZATION_DOMAIN_BUS].bIsPresent &&
+      info.utilization[NVML_GPU_UTILIZATION_DOMAIN_BUS].percentage <= 100)
+    SET_GPUINFO_DYNAMIC(dynamic_info, bus_util_rate, info.utilization[NVML_GPU_UTILIZATION_DOMAIN_BUS].percentage);
 }
 
 // nvmlDeviceArchitecture_t values (from nvml.h). nvtop does not include nvml.h,
@@ -834,9 +870,11 @@ static bool gpuinfo_nvidia_init_with_lib(const char *libname) {
   if (!nvmlDeviceGetDecoderUtilization)
     goto init_error_clean_exit;
 
-  // Optional: older drivers have no JPEG and optical flow engine counters
+  // Optional: older drivers have no JPEG and optical flow engine counters and
+  // no utilization domains
   nvmlDeviceGetJpgUtilization = dlsym(libnvidia_ml_handle, "nvmlDeviceGetJpgUtilization");
   nvmlDeviceGetOfaUtilization = dlsym(libnvidia_ml_handle, "nvmlDeviceGetOfaUtilization");
+  nvmlDeviceGetDynamicPstatesInfo = dlsym(libnvidia_ml_handle, "nvmlDeviceGetDynamicPstatesInfo");
 
   nvmlDeviceGetGraphicsRunningProcesses_v3 = dlsym(libnvidia_ml_handle, "nvmlDeviceGetGraphicsRunningProcesses_v3");
   nvmlDeviceGetGraphicsRunningProcesses_v2 = dlsym(libnvidia_ml_handle, "nvmlDeviceGetGraphicsRunningProcesses_v2");
@@ -1184,6 +1222,9 @@ static void gpuinfo_nvidia_refresh_dynamic_info(struct gpu_info *_gpu_info) {
     if (last_nvml_return_status == NVML_SUCCESS)
       SET_VALID(gpuinfo_ofa_rate_valid, dynamic_info->valid);
   }
+
+  // Video engine and bus interface loads
+  gpuinfo_nvidia_refresh_utilization_domains(device, dynamic_info);
 
   // Device memory info (total,used,free). Devices sharing memory with the host
   // (a fixed property, recorded in the static info) have no dedicated
