@@ -2110,6 +2110,18 @@ void save_current_data_to_ring(struct list_head *devices, struct nvtop_interface
           if (GPUINFO_DYNAMIC_FIELD_VALID(&device->dynamic_info, decoder_rate))
             data_val = device->dynamic_info.decoder_rate;
           break;
+        case plot_mem_ctrl_util_rate:
+          if (GPUINFO_DYNAMIC_FIELD_VALID(&device->dynamic_info, mem_ctrl_util_rate))
+            data_val = device->dynamic_info.mem_ctrl_util_rate;
+          break;
+        case plot_video_engine_rate:
+          if (GPUINFO_DYNAMIC_FIELD_VALID(&device->dynamic_info, video_engine_rate))
+            data_val = device->dynamic_info.video_engine_rate;
+          break;
+        case plot_bus_util_rate:
+          if (GPUINFO_DYNAMIC_FIELD_VALID(&device->dynamic_info, bus_util_rate))
+            data_val = device->dynamic_info.bus_util_rate;
+          break;
         case plot_gpu_temperature:
           if (GPUINFO_DYNAMIC_FIELD_VALID(&device->dynamic_info, gpu_temp)) {
             data_val = device->dynamic_info.gpu_temp;
@@ -2222,6 +2234,15 @@ static unsigned populate_plot_data_from_ring_buffer(struct list_head *devices, c
           break;
         case plot_decoder_rate:
           snprintf(plot_legend[in_processing], PLOT_MAX_LEGEND_SIZE, "%s%u decode%%", unit, dev_id);
+          break;
+        case plot_mem_ctrl_util_rate:
+          snprintf(plot_legend[in_processing], PLOT_MAX_LEGEND_SIZE, "%s%u memctl%%", unit, dev_id);
+          break;
+        case plot_video_engine_rate:
+          snprintf(plot_legend[in_processing], PLOT_MAX_LEGEND_SIZE, "%s%u video%%", unit, dev_id);
+          break;
+        case plot_bus_util_rate:
+          snprintf(plot_legend[in_processing], PLOT_MAX_LEGEND_SIZE, "%s%u bus%%", unit, dev_id);
           break;
         case plot_gpu_temperature:
           snprintf(plot_legend[in_processing], PLOT_MAX_LEGEND_SIZE, "%s%u temp(c)", unit, dev_id);
