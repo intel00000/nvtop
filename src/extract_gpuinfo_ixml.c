@@ -479,6 +479,7 @@ static void gpuinfo_ixml_refresh_dynamic_info(struct gpu_info *_gpu_info) {
   if (last_nvml_return_status == NVML_SUCCESS) {
     SET_GPUINFO_DYNAMIC(dynamic_info, gpu_util_rate, utilization.gpu);
     SET_GPUINFO_DYNAMIC(dynamic_info, mem_util_rate, utilization.memory);
+    SET_GPUINFO_DYNAMIC(dynamic_info, mem_ctrl_util_rate, utilization.memory);
     gpu_info->last_utilization_timestamp = 0;
   }
 
