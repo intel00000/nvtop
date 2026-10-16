@@ -57,14 +57,20 @@ Table of Contents
 
 NVTOP Options and Interactive Commands
 --------------------------------------
+
 ### Interactive Setup Window
 
 NVTOP has a builtin setup utility that provides a way to specialize the interface to your needs.
 Simply press ``F2`` and select the options that are the best for you.
 
+In the ``Devices`` section you can turn on the engine loads (memory controller, video engine,
+bus interface, JPEG and optical flow accelerator), which are off by default and only show up on
+the devices that report them.
+
 In the ``Chart`` section you can choose which metrics are plotted, including GPU and memory
-utilization, temperature, power, clocks, and the **PCIe RX / TX load** (the receive and transmit
-throughput as a percentage of the maximum link bandwidth).
+utilization, temperature, power, clocks, the memory controller, video engine and bus interface
+loads, and the **PCIe RX / TX load** (the receive and transmit throughput as a percentage of the
+maximum link bandwidth).
 
 ![NVTOP Setup Window](/screenshot/Nvtop-config.png)
 
@@ -76,10 +82,13 @@ The preferences will be loaded the next time you run ``nvtop``.
 ### NVTOP Manual and Command line Options
 
 NVTOP comes with a manpage!
+
 ```bash
 man nvtop
 ```
+
 For quick command line arguments help
+
 ```bash
 nvtop -h
 nvtop --help
@@ -128,7 +137,8 @@ static specs (shader cores, L2 cache, execution engines) and the secondary HUB,
 HOST, DISP, MSD and UTILS clocks. The clock domains are read through the *NvAPI
 library* (`libnvidia-api.so.1`) that recent drivers install alongside NVML;
 without it the rest of the interface is unaffected and the bar takes no room on
-a GPU that reports nothing.
+a GPU that reports nothing. The engine loads enabled in the setup window join
+the same bar.
 
 ### Adreno
 
@@ -144,6 +154,7 @@ processes using Adreno GPUs.
 NVTOP includes some initial support for Apple using Metal. This is only supported when building for Apple, and when building for Apple only this vendor is supported.
 
 **APPLE SUPPORT STATUS**
+
 - Apple support is still being worked on. Some bugs and limitations may apply.
 
 ### Ascend
@@ -201,18 +212,18 @@ Build
 
 Several libraries are required in order for NVTOP to display GPU info:
 
-* The *ncurses* library driving the user interface.
-  * This makes the screen look beautiful.
-* For NVIDIA: the *NVIDIA Management Library* (*NVML*) which comes with the GPU driver.
-  * This queries the GPU for info.
-  * The *NvAPI library* (`libnvidia-api.so.1`), also from the driver, is used
+- The *ncurses* library driving the user interface.
+  - This makes the screen look beautiful.
+- For NVIDIA: the *NVIDIA Management Library* (*NVML*) which comes with the GPU driver.
+  - This queries the GPU for info.
+  - The *NvAPI library* (`libnvidia-api.so.1`), also from the driver, is used
     when present for the clock domains NVML does not report. It is optional.
-* For AMD: the libdrm library used to query AMD GPUs through the kernel driver.
-* For METAX: the *MetaX System Management Library* (*MXSML*) which comes with the GPU driver.
-  * This queries the GPU for info.
-* For Enflame: the *Enflame Management Library* (*EFML*) which comes with the GCU driver.
-* For Iluvatar CoreX: the *ixML* runtime library (`libixml.so`) which comes with the driver.
-  * This backend loads the library dynamically at runtime.
+- For AMD: the libdrm library used to query AMD GPUs through the kernel driver.
+- For METAX: the *MetaX System Management Library* (*MXSML*) which comes with the GPU driver.
+  - This queries the GPU for info.
+- For Enflame: the *Enflame Management Library* (*EFML*) which comes with the GCU driver.
+- For Iluvatar CoreX: the *ixML* runtime library (`libixml.so`) which comes with the driver.
+  - This backend loads the library dynamically at runtime.
 
 ## Distribution Specific Installation Process
 
@@ -241,6 +252,7 @@ sudo apt install nvtop
 #### Older
 
 - AMD and Intel Dependencies
+
   ```bash
   sudo apt install libdrm-dev libsystemd-dev
   # Ubuntu 18.04
@@ -252,13 +264,13 @@ sudo apt install nvtop
 
 - NVTOP Dependencies
   - CMake, ncurses and Git
+
   ```bash
   sudo apt install cmake libncurses5-dev libncursesw5-dev git
   ```
 
 - NVTOP
   - Follow the [NVTOP Build](#nvtop-build)
-
 
 ### Fedora / Red Hat / CentOS
 
@@ -284,9 +296,10 @@ A standalone application is available as [AppImage](#appimage).
   sudo dnf install nvtop
   ```
 
-#### Build process for Fedora / Red Hat / CentOS:
+#### Build process for Fedora / Red Hat / CentOS
 
 - AMD and Intel Dependencies
+
   ```bash
   sudo dnf install libdrm-devel systemd-devel
   ```
@@ -296,6 +309,7 @@ A standalone application is available as [AppImage](#appimage).
 
 - NVTOP Dependencies
   - CMake, ncurses, C++ and Git
+
   ```bash
   sudo dnf install cmake ncurses-devel git gcc-c++
   ```
@@ -310,6 +324,7 @@ A standalone application is available as an [AppImage](#appimage).
 Build process for OpenSUSE:
 
 - AMD Dependency
+
   ```bash
   sudo zypper install libdrm-devel
   ```
@@ -319,6 +334,7 @@ Build process for OpenSUSE:
 
 - NVTOP Dependencies
   - CMake, ncurses and Git
+
     ```bash
     sudo zypper install cmake ncurses-devel git
     ```
@@ -430,9 +446,9 @@ If you use **conda** as environment manager and encounter an error while buildin
 
 The build system supports multiple build types (e.g. -DCMAKE_BUILD_TYPE=RelWithDebInfo):
 
-* Release: Binary without debug info
-* RelWithDebInfo: Binary with debug info
-* Debug: Compile with warning flags and address/undefined sanitizers enabled (for development purposes)
+- Release: Binary without debug info
+- RelWithDebInfo: Binary with debug info
+- Debug: Compile with warning flags and address/undefined sanitizers enabled (for development purposes)
 
 Troubleshoot
 ------------
